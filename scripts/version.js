@@ -30,19 +30,16 @@ var dst = {
 };
 
 function latest(repo) {
-  return new Promise((resolve, reject) => {
-    repo.git.tags({ "--sort": "-committerdate" }, (err, tags) => {
-      if (err) return reject(err);
-      for (var i = 0; i < tags.all.length; ++i) {
-        var result = repo.filter(tags.all[i]);
-        if (result !== null) {
-          repo.tag = result.tag;
-          repo.version = result.version;
-          return resolve();
-        };
+  return repo.git.tags({ "--sort": "-committerdate" }).then(tags => {
+    for (var tag of tags.all) {
+      var result = repo.filter(tag);
+      if (result !== null) {
+        repo.tag = result.tag;
+        repo.version = result.version;
+        return;
       }
-      return reject(Error("no matching tags: " + tags.all.join(", ")));
-    });
+    }
+    throw Error("no matching tags: " + tags.all.join(", "));
   }).catch(err => {
     console.error(err.stack);
     process.exit(1);
